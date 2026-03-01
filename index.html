@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ruleta Diaria</title>
+<style>
+body{
+  margin:0;
+  background:#0f172a;
+  color:white;
+  font-family:Arial, sans-serif;
+  text-align:center;
+}
+h1{margin-top:20px;}
+#wheelContainer{
+  position:relative;
+  width:350px;
+  height:350px;
+  margin:30px auto;
+}
+#wheel{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  border:8px solid white;
+  transition:transform 1s linear;
+}
+#pointer{
+  position:absolute;
+  top:-10px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:30px;
+}
+button{
+  padding:12px 25px;
+  margin:10px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+.primary{background:#22c55e;color:white;}
+.secondary{background:#334155;color:white;}
+input{
+  padding:10px;
+  width:80%;
+  max-width:300px;
+  margin:10px;
+  border-radius:6px;
+  border:none;
+}
+#panel,#rulesPanel{display:none;margin-top:20px;}
+.numberBtn{
+  width:40px;height:40px;margin:5px;
+  border-radius:50%;border:none;cursor:pointer;
+}
+.selected{outline:3px solid white;}
+.cardBox{
+  background:#1e293b;padding:15px;border-radius:10px;margin:15px auto;width:300px;
+}
+#winnerBox{
+  background:#facc15;color:#000;padding:15px;border-radius:10px;margin:15px auto;width:350px;
+  display:none;
+  animation:blink 1s infinite;
+}
+@keyframes blink{
+  0%,100%{opacity:1;}
+  50%{opacity:0.5;}
+}
+#status{
+  margin-top:15px;
+  font-size:18px;
+  color:#fbbf24;
+}
+.rulesContent{
+  text-align:left;
+  background:#1e293b;
+  padding:15px;
+  border-radius:10px;
+  width:90%;
+  max-width:350px;
+  margin:10px auto;
+  overflow-y:auto;
+  max-height:400px;
+}
+.closeBtn{
+  background:#ef4444;
+  color:white;
+  padding:8px 20px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<h1>Ruleta Diaria</h1>
+<div id="status"></div>
+
+<div id="wheelContainer">
+  <div id="pointer">▼</div>
+  <canvas id="wheel" width="350" height="350"></canvas>
+</div>
+
+<button class="primary" onclick="openPanel()">Participar</button>
+<button class="secondary" onclick="openRules()">Reglas de Participación</button>
+
+<div id="panel">
+<h2>Selecciona hasta 5 números</h2>
+<div id="numbers"></div>
+<button class="primary" onclick="continueToPayment()">Aceptar y continuar</button>
+
+<div id="paymentSection" style="display:none;">
+<h3 id="totalText"></h3>
+
+<div class="cardBox">
+<p><strong>Número de tarjeta para validación:</strong></p>
+<p>9224-0699-9649-2399</p>
+</div>
+
+<input type="text" id="codeInput" placeholder="Ej: KW600EADQ9999">
+<br>
+<button class="primary" onclick="validateCode()">Validar</button>
+</div>
+<div id="message"></div>
+</div>
+
+<div id="rulesPanel">
+<h2>Reglas de la Ruleta Diaria</h2>
+<div class="rulesContent">
+<h3>Participación diaria</h3>
+<ul>
+<li>Cada jugador puede seleccionar hasta 5 números por intento.</li>
+<li>Los números válidos van del 1 al 15.</li>
+<li>Solo se permite un intento por número de participación.</li>
+</ul>
+
+<h3>Costo de participación</h3>
+<ul>
+<li>Cada número seleccionado tiene un valor de 200 CUP.</li>
+<li>El pago se realiza mediante la validación de un código de tarjeta.</li>
+</ul>
+
+<h3>Horario del sorteo</h3>
+<ul>
+<li>La ruleta se activa automáticamente todos los días a partir de las 8:00 a.m.</li>
+<li>Los giros automáticos ocurren a los siguientes horarios:</li>
+<li>8:00 → termina a 8:00:30</li>
+<li>8:01 → termina a 8:01:30</li>
+<li>8:02 → termina a 8:02:30</li>
+</ul>
+
+<h3>Determinación de los ganadores</h3>
+<ul>
+<li>Cada giro genera un número ganador aleatorio entre 1 y 15.</li>
+<li>Si tu número seleccionado coincide con el número ganador del giro, tu ticket obtiene un premio.</li>
+<li>Se mantiene un historial visible de los números ganadores para todos los giros del día.</li>
+</ul>
+</div>
+<button class="closeBtn" onclick="closeRules()">Cerrar</button>
+</div>
+
+<div id="winnerBox"></div>
+
+<script>
+// --- RUEDA ---
+const wheel=document.getElementById("wheel");
+const ctx=wheel.getContext("2d");
+const numbersCount=15;
+let angle=0;
+let speed=0.02;
+let selectedNumbers=[];
+const pricePerNumber=200;
+let finalAngle=null;
+
+// Premios
+function getDailyResult(){
+const today=new Date().toISOString().split("T")[0];
+let key="result_"+today;
+let result=JSON.parse(localStorage.getItem(key));
+if(!result){
+const prizes=[3,6,12];
+result={
+date:today,
+winner:prizes[Math.floor(Math.random()*prizes.length)],
+prizes:shuffle(prizes)
+};
+localStorage.setItem(key,JSON.stringify(result));
+}
+return result;
+}
+
+function shuffle(arr){
+let a=[...arr];
+for(let i=a.length-1;i>0;i--){
+let j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]];
+}
+return a;
+}
+
+// Dibuja la ruleta
+function drawWheel(){
+const radius=175;
+ctx.clearRect(0,0,350,350);
+ctx.font="16px Arial";
+ctx.textAlign="center";
+ctx.textBaseline="middle";
+for(let i=0;i<numbersCount;i++){
+const start=(i*2*Math.PI)/numbersCount;
+const end=((i+1)*2*Math.PI)/numbersCount;
+ctx.beginPath();
+ctx.moveTo(radius,radius);
+ctx.arc(radius,radius,radius,start,end);
+ctx.fillStyle=`hsl(${i*24},70%,50%)`;
+ctx.fill();
+ctx.fillStyle="white";
+ctx.save();
+ctx.translate(radius,radius);
+ctx.rotate(start+(end-start)/2);
+ctx.fillText(i+1,100,0);
+ctx.restore();
+}
+}
+
+drawWheel();
+
+// Animación
+function animate(){
+angle+=speed;
+if(finalAngle!==null){
+let diff=finalAngle-angle;
+speed=diff*0.02;
+if(Math.abs(diff)<0.002){
+angle=finalAngle;
+speed=0;
+finalAngle=null;
+revealWinner();
+}
+}
+wheel.style.transform=`rotate(${angle}rad)`;
+adjustSpeed();
+requestAnimationFrame(animate);
+}
+
+function adjustSpeed(){
+const now=new Date();
+const h=now.getHours();
+const m=now.getMinutes();
+if(h===19 && m>=40 && m<55) speed=0.05;
+else if(h===19 && m>=55) speed*=0.995;
+else if(h===20 && finalAngle===null) alignToWinner();
+else speed=0.02;
+}
+
+function alignToWinner(){
+const result=getDailyResult();
+const winner=result.winner;
+const sectionAngle=(2*Math.PI)/numbersCount;
+finalAngle=(winner-1)*sectionAngle + sectionAngle/2 + Math.PI*6;
+}
+
+// Contador
+function updateCountdown(){
+const now=new Date();
+const target=new Date();
+target.setHours(20,0,0,0);
+let diff=target-now;
+if(diff>0){
+let h=Math.floor(diff/3600000);
+let m=Math.floor((diff%3600000)/60000);
+let s=Math.floor((diff%60000)/1000);
+document.getElementById("status").innerText=`Resultado en ${h}h ${m}m ${s}s`;
+}else{
+document.getElementById("status").innerText=`Resultado publicado`;
+}
+}
+setInterval(updateCountdown,1000);
+
+// Panel de participación
+function openPanel(){
+if(new Date().getHours()>=20){
+alert("El resultado ya fue publicado. Vuelva mañana.");
+return;
+}
+document.getElementById("panel").style.display="block";
+generateNumberButtons();
+}
+
+function generateNumberButtons(){
+const container=document.getElementById("numbers");
+container.innerHTML="";
+for(let i=1;i<=numbersCount;i++){
+const btn=document.createElement("button");
+btn.innerText=i;
+btn.className="numberBtn";
+btn.onclick=()=>selectNumber(i,btn);
+container.appendChild(btn);
+}
+}
+
+function selectNumber(num,btn){
+if(selectedNumbers.includes(num)){
+selectedNumbers=selectedNumbers.filter(n=>n!==num);
+btn.classList.remove("selected");
+}else{
+if(selectedNumbers.length>=5){
+alert("Máximo 5 números por intento.");
+return;
+}
+selectedNumbers.push(num);
+btn.classList.add("selected");
+}
+}
+
+function continueToPayment(){
+if(selectedNumbers.length===0){alert("Selecciona al menos un número.");return;}
+document.getElementById("paymentSection").style.display="block";
+const total=selectedNumbers.length*pricePerNumber;
+document.getElementById("totalText").innerText=`Total a validar: ${total} CUP`;
+}
+
+function validateCode(){
+const code=document.getElementById("codeInput").value.trim();
+const regex=/^[A-Z]{2}\d{3}[A-Z]{4}\d{4}$/;
+if(!regex.test(code)){alert("Formato inválido.");return;}
+document.getElementById("message").innerText="Procesando validación...";
+setTimeout(()=>{
+saveParticipation(code);
+document.getElementById("message").innerText="Participación registrada correctamente.";
+},7000);
+}
+
+function saveParticipation(code){
+const today=new Date().toISOString().split("T")[0];
+const key="ruleta_"+today;
+let data=JSON.parse(localStorage.getItem(key))||{tickets:[]};
+data.tickets.push({numbers:selectedNumbers,code:code});
+localStorage.setItem(key,JSON.stringify(data));
+selectedNumbers=[];
+document.getElementById("paymentSection").style.display="none";
+document.getElementById("numbers").innerHTML="";
+}
+
+// Mostrar ganador
+function revealWinner(){
+const result=getDailyResult();
+const today=new Date().toISOString().split("T")[0];
+const key="ruleta_"+today;
+let data=JSON.parse(localStorage.getItem(key));
+let winners=[];
+if(data && data.tickets){
+data.tickets.forEach(ticket=>{
+ticket.numbers.forEach(num=>{
+if(result.prizes.includes(num)) winners.push(ticket);
+});
+});
+}
+const box=document.getElementById("winnerBox");
+box.style.display="block";
+box.innerHTML=`🎉 Números ganadores: ${result.prizes.join(", ")}<br>${winners.length} ticket(s) con premio(s)`;
+}
+
+// Reset a medianoche
+function resetAtMidnight(){
+const now=new Date();
+if(now.getHours()===0 && now.getMinutes()===0 && now.getSeconds()<2){
+localStorage.clear();
+location.reload();
+}
+}
+setInterval(resetAtMidnight,1000);
+
+// Reglas
+function openRules(){ document.getElementById("rulesPanel").style.display="block"; }
+function closeRules(){ document.getElementById("rulesPanel").style.display="none"; }
+
+animate();
+</script>
+
+</body>
+</html>
