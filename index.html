@@ -21,14 +21,11 @@ align-items:center;
 height:100vh;
 }
 
-/* CONTENEDOR */
 #app{
 width:100%;
 max-width:420px;
 padding:20px;
 }
-
-/* TARJETAS */
 
 .card{
 background:white;
@@ -37,15 +34,11 @@ padding:20px;
 box-shadow:0 10px 30px rgba(0,0,0,0.15);
 }
 
-/* TITULOS */
-
 h2{
 text-align:center;
 color:#00a651;
 margin-top:0;
 }
-
-/* INPUTS */
 
 input{
 width:100%;
@@ -55,8 +48,6 @@ border-radius:8px;
 border:1px solid #ddd;
 font-size:15px;
 }
-
-/* BOTONES */
 
 button{
 border:none;
@@ -73,8 +64,6 @@ button:hover{
 background:#00a651;
 }
 
-/* BOTONES WALLET */
-
 .actions{
 display:flex;
 gap:10px;
@@ -84,8 +73,6 @@ margin-top:15px;
 .actions button{
 flex:1;
 }
-
-/* SALDO */
 
 .balance-box{
 background:linear-gradient(135deg,#00c853,#2ecc71);
@@ -101,8 +88,6 @@ font-size:32px;
 font-weight:bold;
 }
 
-/* DIRECCION */
-
 .address-box{
 background:#f5f5f5;
 padding:10px;
@@ -111,8 +96,6 @@ word-break:break-all;
 font-size:13px;
 margin-top:10px;
 }
-
-/* PANEL MODAL */
 
 .modal{
 position:fixed;
@@ -135,16 +118,6 @@ width:100%;
 max-width:350px;
 }
 
-/* QR */
-
-#qr-code{
-display:flex;
-justify-content:center;
-margin-top:10px;
-}
-
-/* NOTIFICACION */
-
 .toast{
 position:fixed;
 bottom:20px;
@@ -158,24 +131,12 @@ display:none;
 font-size:14px;
 }
 
-/* RESPONSIVE */
-
-@media(max-width:500px){
-
-body{
-padding:10px;
-}
-
-}
-
 </style>
 </head>
 
 <body>
 
 <div id="app">
-
-<!-- LOGIN -->
 
 <div id="login-screen" class="card">
 
@@ -185,13 +146,8 @@ padding:10px;
 <input id="last-name" placeholder="Apellidos">
 <input id="email" type="email" placeholder="Correo electrónico">
 
-<div style="position:relative">
 <input id="password" type="password" placeholder="Contraseña">
-</div>
-
-<div style="position:relative">
 <input id="confirm-password" type="password" placeholder="Confirmar contraseña">
-</div>
 
 <button id="registerBtn" style="width:100%;margin-top:10px;">
 Registrarse / Iniciar sesión
@@ -200,14 +156,12 @@ Registrarse / Iniciar sesión
 </div>
 
 
-<!-- WALLET -->
-
 <div id="wallet-screen" class="card" style="display:none;">
 
 <div class="balance-box">
 
 <div>Saldo disponible</div>
-<div class="balance" id="balance">0 USDT</div>
+<div class="balance" id="balance">0.00 USDT</div>
 
 </div>
 
@@ -236,7 +190,6 @@ Copiar dirección
 
 </div>
 
-<!-- MODAL AGREGAR MONTO -->
 
 <div class="modal" id="addModal">
 
@@ -255,17 +208,15 @@ Confirmar
 </div>
 
 
-<!-- MODAL HASH -->
-
 <div class="modal" id="hashModal">
 
 <div class="modal-content">
 
 <h3>Confirmar depósito</h3>
 
-<p>Introduce el hash de verificación</p>
+<p>Introduce el hash de la transacción</p>
 
-<input id="hashInput" placeholder="Hash">
+<input id="hashInput" placeholder="Hash BEP20">
 
 <button style="width:100%;margin-top:10px;" id="confirmHash">
 Confirmar depósito
@@ -275,8 +226,6 @@ Confirmar depósito
 
 </div>
 
-
-<!-- MODAL RETIRO -->
 
 <div class="modal" id="withdrawModal">
 
@@ -300,17 +249,12 @@ Confirmar retiro
 <div class="toast" id="toast"></div>
 
 
-<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-
 <script>
 
-/* LOCAL STORAGE */
+let balance = parseFloat(localStorage.getItem("balance")) || 0
+let pendingDeposit = 0
 
-let balance=localStorage.getItem("balance")||0
-
-document.getElementById("balance").innerText=balance+" USDT"
-
-/* LOGIN */
+updateBalance()
 
 if(localStorage.getItem("user")){
 showWallet()
@@ -339,19 +283,18 @@ document.getElementById("wallet-screen").style.display="block"
 
 }
 
-/* COPIAR DIRECCION */
+function updateBalance(){
+document.getElementById("balance").innerText = balance.toFixed(2)+" USDT"
+}
 
 document.getElementById("copyBtn").onclick=function(){
 
 let text=document.getElementById("address").innerText
-
 navigator.clipboard.writeText(text)
 
 showToast("Dirección copiada")
 
 }
-
-/* MODALS */
 
 function openModal(id){
 document.getElementById(id).style.display="flex"
@@ -361,85 +304,92 @@ function closeModal(id){
 document.getElementById(id).style.display="none"
 }
 
-/* AGREGAR */
-
 document.getElementById("addBtn").onclick=function(){
-
 openModal("addModal")
-
 }
 
 document.getElementById("confirmAmount").onclick=function(){
 
-let amount=document.getElementById("depositAmount").value
+let amount=parseFloat(document.getElementById("depositAmount").value)
 
-if(amount<=0)return
+if(!amount || amount<=0){
+alert("Ingrese un monto válido")
+return
+}
+
+pendingDeposit=amount
 
 closeModal("addModal")
-
 openModal("hashModal")
 
 }
 
-/* HASH */
+function isValidHash(hash){
+return /^0x([A-Fa-f0-9]{64})$/.test(hash)
+}
 
 document.getElementById("confirmHash").onclick=function(){
 
-let hash=document.getElementById("hashInput").value
+let hash=document.getElementById("hashInput").value.trim()
 
-if(hash==="778891"){
+if(!isValidHash(hash)){
+alert("Hash BEP20 inválido")
+return
+}
 
-let amount=parseFloat(document.getElementById("depositAmount").value)
+let bonus=0
 
-balance=parseFloat(balance)+amount
+if(pendingDeposit>=5){
+bonus=25
+}
+
+balance += pendingDeposit + bonus
 
 localStorage.setItem("balance",balance)
 
-document.getElementById("balance").innerText=balance+" USDT"
+updateBalance()
 
 closeModal("hashModal")
 
-showToast("Su fondo ha sido agregado correctamente")
-
+if(bonus>0){
+showToast("Depósito "+pendingDeposit+" USDT + Bono 25 USDT")
 }else{
-
-alert("Hash incorrecto")
-
+showToast("Depósito confirmado "+pendingDeposit+" USDT")
 }
 
-}
+pendingDeposit=0
 
-/* RETIRO */
+}
 
 document.getElementById("withdrawBtn").onclick=function(){
-
 openModal("withdrawModal")
-
 }
 
 document.getElementById("confirmWithdraw").onclick=function(){
 
 let amount=parseFloat(document.getElementById("withdrawAmount").value)
 
-if(amount>balance){
+if(!amount || amount<=0){
+alert("Monto inválido")
+return
+}
 
+if(amount>balance){
 alert("Saldo insuficiente")
 return
 }
 
-balance-=amount
+balance -= amount
 
 localStorage.setItem("balance",balance)
 
-document.getElementById("balance").innerText=balance+" USDT"
+updateBalance()
 
 closeModal("withdrawModal")
 
-showToast("Usted ha retirado "+amount+" USDT correctamente")
+showToast("Retiro realizado "+amount+" USDT")
 
 }
-
-/* TOAST */
 
 function showToast(msg){
 
@@ -458,4 +408,4 @@ toast.style.display="none"
 </script>
 
 </body>
-    </html>
+</html>
