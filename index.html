@@ -201,6 +201,7 @@ Copiar dirección
 
 <button id="addBtn">Agregar</button>
 <button id="withdrawBtn">Retirar</button>
+<button id="logoutBtn">Cerrar sesión</button>
 
 </div>
 
@@ -271,6 +272,7 @@ Confirmar retiro
 
 let balance = parseFloat(localStorage.getItem("balance")) || 0
 let pendingDeposit = 0
+let usedHashes = JSON.parse(localStorage.getItem("usedHashes")) || [] // Array de hashes usados
 
 updateBalance()
 
@@ -294,11 +296,20 @@ showWallet()
 
 }
 
-function showWallet(){
+document.getElementById("logoutBtn").onclick=function(){
+localStorage.removeItem("user")
+localStorage.removeItem("balance")
+showLogin()
+}
 
+function showLogin(){
+document.getElementById("login-screen").style.display="block"
+document.getElementById("wallet-screen").style.display="none"
+}
+
+function showWallet(){
 document.getElementById("login-screen").style.display="none"
 document.getElementById("wallet-screen").style.display="block"
-
 }
 
 function updateBalance(){
@@ -355,6 +366,11 @@ alert("Hash BEP20 inválido")
 return
 }
 
+if(usedHashes.includes(hash)){
+alert("Este hash ya ha sido utilizado.")
+return
+}
+
 let bonus=0
 
 if(pendingDeposit>=5){
@@ -362,6 +378,9 @@ bonus=25
 }
 
 balance += pendingDeposit + bonus
+
+usedHashes.push(hash)
+localStorage.setItem("usedHashes", JSON.stringify(usedHashes)) // Guardar hash usado
 
 localStorage.setItem("balance",balance)
 
