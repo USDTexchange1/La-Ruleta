@@ -1,152 +1,461 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-WALLET - Plataforma de Bonos USDT</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f8f0;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-WALLET</title>
 
-        #login-screen, #main-screen {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            border-radius: 10px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
+<style>
 
-        h2 {
-            text-align: center;
-            color: #32CD32;
-        }
+*{
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
+body{
+margin:0;
+background:linear-gradient(135deg,#00c853,#43e97b);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
 
-        button {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: none;
-            background-color: #32CD32;
-            color: white;
-            border-radius: 5px;
-            font-size: 16px;
-        }
+/* CONTENEDOR */
+#app{
+width:100%;
+max-width:420px;
+padding:20px;
+}
 
-        button:hover {
-            background-color: #28a745;
-            cursor: pointer;
-        }
+/* TARJETAS */
 
-        #qr-panel {
-            text-align: center;
-        }
+.card{
+background:white;
+border-radius:16px;
+padding:20px;
+box-shadow:0 10px 30px rgba(0,0,0,0.15);
+}
 
-        #qr-code {
-            background-color: #f1f1f1;
-            width: 200px;
-            height: 200px;
-            margin: 0 auto;
-            border-radius: 5px;
-        }
-    </style>
+/* TITULOS */
+
+h2{
+text-align:center;
+color:#00a651;
+margin-top:0;
+}
+
+/* INPUTS */
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:8px;
+border:1px solid #ddd;
+font-size:15px;
+}
+
+/* BOTONES */
+
+button{
+border:none;
+border-radius:10px;
+padding:12px;
+font-size:15px;
+cursor:pointer;
+background:#00c853;
+color:white;
+transition:.2s;
+}
+
+button:hover{
+background:#00a651;
+}
+
+/* BOTONES WALLET */
+
+.actions{
+display:flex;
+gap:10px;
+margin-top:15px;
+}
+
+.actions button{
+flex:1;
+}
+
+/* SALDO */
+
+.balance-box{
+background:linear-gradient(135deg,#00c853,#2ecc71);
+color:white;
+padding:20px;
+border-radius:14px;
+text-align:center;
+margin-bottom:20px;
+}
+
+.balance{
+font-size:32px;
+font-weight:bold;
+}
+
+/* DIRECCION */
+
+.address-box{
+background:#f5f5f5;
+padding:10px;
+border-radius:8px;
+word-break:break-all;
+font-size:13px;
+margin-top:10px;
+}
+
+/* PANEL MODAL */
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+display:none;
+justify-content:center;
+align-items:center;
+padding:20px;
+}
+
+.modal-content{
+background:white;
+padding:20px;
+border-radius:14px;
+width:100%;
+max-width:350px;
+}
+
+/* QR */
+
+#qr-code{
+display:flex;
+justify-content:center;
+margin-top:10px;
+}
+
+/* NOTIFICACION */
+
+.toast{
+position:fixed;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,0.7);
+color:white;
+padding:12px 18px;
+border-radius:10px;
+display:none;
+font-size:14px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:500px){
+
+body{
+padding:10px;
+}
+
+}
+
+</style>
 </head>
+
 <body>
-    <div id="app">
-        <!-- Pantalla de Registro/Inicio de Sesión -->
-        <div id="login-screen">
-            <h2>Bienvenido a T-WALLET</h2>
-            <form id="login-form">
-                <input type="text" id="name" placeholder="Nombre" required>
-                <input type="text" id="last-name" placeholder="Apellidos" required>
-                <input type="email" id="email" placeholder="Correo Electrónico" required>
-                <input type="password" id="password" placeholder="Contraseña" required>
-                <input type="password" id="confirm-password" placeholder="Confirmar Contraseña" required>
-                <button type="submit">Registrar / Iniciar Sesión</button>
-            </form>
-        </div>
 
-        <!-- Pantalla Principal después de iniciar sesión -->
-        <div id="main-screen" style="display: none;">
-            <h2>¡Felicidades! Te has registrado correctamente.</h2>
-            <p>Deposita 5 USDT o más para recibir tu bono de 25 USDT.</p>
-            <p>Dirección de USDT BEP20: <span id="crypto-address">0x3670a0bFfb8b8A6D42177807F8dFd369A3995b9e</span></p>
-            <button id="copy-address">Copiar Dirección</button>
-            <button id="withdraw">Retirar</button>
-            <button id="add-funds">Agregar Fondos</button>
+<div id="app">
 
-            <!-- Panel QR -->
-            <div id="qr-panel" style="display: none;">
-                <h3>Escanea el código QR para depositar</h3>
-                <div id="qr-code"></div>
-                <p>¡Recuerda usar solo la red BEP20!</p>
-            </div>
-        </div>
-    </div>
+<!-- LOGIN -->
 
-    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-    <script>
-        // Simula almacenamiento en localStorage
-        if (localStorage.getItem('user')) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-screen').style.display = 'block';
-        }
+<div id="login-screen" class="card">
 
-        // Registra o inicia sesión el usuario
-        document.getElementById('login-form').addEventListener('submit', function(e) {
-            e.preventDefault();
+<h2>T-WALLET</h2>
 
-            const name = document.getElementById('name').value;
-            const lastName = document.getElementById('last-name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
+<input id="name" placeholder="Nombre">
+<input id="last-name" placeholder="Apellidos">
+<input id="email" type="email" placeholder="Correo electrónico">
 
-            if (password === confirmPassword) {
-                const user = { name, lastName, email };
-                localStorage.setItem('user', JSON.stringify(user));
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-screen').style.display = 'block';
-            } else {
-                alert('Las contraseñas no coinciden.');
-            }
-        });
+<div style="position:relative">
+<input id="password" type="password" placeholder="Contraseña">
+</div>
 
-        // Copiar dirección de criptomoneda
-        document.getElementById('copy-address').addEventListener('click', function() {
-            const cryptoAddress = document.getElementById('crypto-address').textContent;
-            navigator.clipboard.writeText(cryptoAddress).then(() => {
-                alert('Dirección copiada al portapapeles.');
-            });
-        });
+<div style="position:relative">
+<input id="confirm-password" type="password" placeholder="Confirmar contraseña">
+</div>
 
-        // Agregar fondos y mostrar código QR
-        document.getElementById('add-funds').addEventListener('click', function() {
-            document.getElementById('qr-panel').style.display = 'block';
+<button id="registerBtn" style="width:100%;margin-top:10px;">
+Registrarse / Iniciar sesión
+</button>
 
-            // Generar código QR para la dirección de USDT
-            new QRCode(document.getElementById("qr-code"), {
-                text: "0x3670a0bFfb8b8A6D42177807F8dFd369A3995b9e", // Dirección de USDT
-                width: 200,
-                height: 200
-            });
-        });
-    </script>
+</div>
+
+
+<!-- WALLET -->
+
+<div id="wallet-screen" class="card" style="display:none;">
+
+<div class="balance-box">
+
+<div>Saldo disponible</div>
+<div class="balance" id="balance">0 USDT</div>
+
+</div>
+
+<div>
+
+<b>Depositar USDT BEP20</b>
+
+<div class="address-box" id="address">
+0x3670a0bFfb8b8A6D42177807F8dFd369A3995b9e
+</div>
+
+<button style="width:100%;margin-top:10px;" id="copyBtn">
+Copiar dirección
+</button>
+
+</div>
+
+<div class="actions">
+
+<button id="addBtn">Agregar</button>
+<button id="withdrawBtn">Retirar</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- MODAL AGREGAR MONTO -->
+
+<div class="modal" id="addModal">
+
+<div class="modal-content">
+
+<h3>Agregar fondos</h3>
+
+<input id="depositAmount" type="number" placeholder="Monto en USDT">
+
+<button style="width:100%;margin-top:10px;" id="confirmAmount">
+Confirmar
+</button>
+
+</div>
+
+</div>
+
+
+<!-- MODAL HASH -->
+
+<div class="modal" id="hashModal">
+
+<div class="modal-content">
+
+<h3>Confirmar depósito</h3>
+
+<p>Introduce el hash de verificación</p>
+
+<input id="hashInput" placeholder="Hash">
+
+<button style="width:100%;margin-top:10px;" id="confirmHash">
+Confirmar depósito
+</button>
+
+</div>
+
+</div>
+
+
+<!-- MODAL RETIRO -->
+
+<div class="modal" id="withdrawModal">
+
+<div class="modal-content">
+
+<h3>Retirar USDT</h3>
+
+<input id="withdrawAddress" placeholder="Dirección BEP20">
+
+<input id="withdrawAmount" type="number" placeholder="Monto a retirar">
+
+<button style="width:100%;margin-top:10px;" id="confirmWithdraw">
+Confirmar retiro
+</button>
+
+</div>
+
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+
+<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+
+<script>
+
+/* LOCAL STORAGE */
+
+let balance=localStorage.getItem("balance")||0
+
+document.getElementById("balance").innerText=balance+" USDT"
+
+/* LOGIN */
+
+if(localStorage.getItem("user")){
+showWallet()
+}
+
+document.getElementById("registerBtn").onclick=function(){
+
+let password=document.getElementById("password").value
+let confirm=document.getElementById("confirm-password").value
+
+if(password!==confirm){
+alert("Las contraseñas no coinciden")
+return
+}
+
+localStorage.setItem("user","true")
+
+showWallet()
+
+}
+
+function showWallet(){
+
+document.getElementById("login-screen").style.display="none"
+document.getElementById("wallet-screen").style.display="block"
+
+}
+
+/* COPIAR DIRECCION */
+
+document.getElementById("copyBtn").onclick=function(){
+
+let text=document.getElementById("address").innerText
+
+navigator.clipboard.writeText(text)
+
+showToast("Dirección copiada")
+
+}
+
+/* MODALS */
+
+function openModal(id){
+document.getElementById(id).style.display="flex"
+}
+
+function closeModal(id){
+document.getElementById(id).style.display="none"
+}
+
+/* AGREGAR */
+
+document.getElementById("addBtn").onclick=function(){
+
+openModal("addModal")
+
+}
+
+document.getElementById("confirmAmount").onclick=function(){
+
+let amount=document.getElementById("depositAmount").value
+
+if(amount<=0)return
+
+closeModal("addModal")
+
+openModal("hashModal")
+
+}
+
+/* HASH */
+
+document.getElementById("confirmHash").onclick=function(){
+
+let hash=document.getElementById("hashInput").value
+
+if(hash==="778891"){
+
+let amount=parseFloat(document.getElementById("depositAmount").value)
+
+balance=parseFloat(balance)+amount
+
+localStorage.setItem("balance",balance)
+
+document.getElementById("balance").innerText=balance+" USDT"
+
+closeModal("hashModal")
+
+showToast("Su fondo ha sido agregado correctamente")
+
+}else{
+
+alert("Hash incorrecto")
+
+}
+
+}
+
+/* RETIRO */
+
+document.getElementById("withdrawBtn").onclick=function(){
+
+openModal("withdrawModal")
+
+}
+
+document.getElementById("confirmWithdraw").onclick=function(){
+
+let amount=parseFloat(document.getElementById("withdrawAmount").value)
+
+if(amount>balance){
+
+alert("Saldo insuficiente")
+return
+}
+
+balance-=amount
+
+localStorage.setItem("balance",balance)
+
+document.getElementById("balance").innerText=balance+" USDT"
+
+closeModal("withdrawModal")
+
+showToast("Usted ha retirado "+amount+" USDT correctamente")
+
+}
+
+/* TOAST */
+
+function showToast(msg){
+
+let toast=document.getElementById("toast")
+
+toast.innerText=msg
+
+toast.style.display="block"
+
+setTimeout(()=>{
+toast.style.display="none"
+},3000)
+
+}
+
+</script>
+
 </body>
-  </html>
+    </html>
